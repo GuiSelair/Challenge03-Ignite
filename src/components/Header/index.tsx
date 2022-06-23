@@ -14,6 +14,7 @@ export default function Header(): JSX.Element {
               width={238}
               height={26}
               objectFit="contain"
+              alt="logo"
             />
           </a>
         </Link>
