@@ -26,20 +26,37 @@ interface PostProps {
   post: Post;
 }
 
-// export default function Post() {
-//   // TODO
-// }
+export default function Post({ post }: PostProps): JSX.Element {
+  if (!post) {
+    return <p>Carregando...</p>;
+  }
+  return (
+    <main className={styles.container}>
+      <img src="" alt="" />
+      <div className={styles.content} />
+    </main>
+  );
+}
 
-// export const getStaticPaths = async () => {
-//   const prismic = getPrismicClient({});
-//   const posts = await prismic.getByType(TODO);
+export const getStaticPaths: GetStaticPaths = async () => {
+  const prismic = getPrismicClient({});
+  const posts = await prismic.getByType('posts');
+  return {
+    paths: posts.results.map(post => ({ params: { slug: post.uid } })),
+    fallback: true,
+  };
+};
 
-//   // TODO
-// };
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const prismic = getPrismicClient({});
+  const post = await prismic.getByUID('posts', String(params.slug));
 
-// export const getStaticProps = async ({params }) => {
-//   const prismic = getPrismicClient({});
-//   const response = await prismic.getByUID(TODO);
+  console.log(post);
 
-//   // TODO
-// };
+  return {
+    props: {
+      post,
+    },
+    revalidate: 60 * 60,
+  };
+};
