@@ -5,6 +5,7 @@ import { format, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { asHTML, asText } from '@prismicio/helpers';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 import { getPrismicClient } from '../../services/prismic';
 
@@ -33,6 +34,8 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps): JSX.Element {
+  const router = useRouter();
+
   const postContentBody = useMemo(() => {
     const postContent = post.data.content.map(content => {
       return {
@@ -57,9 +60,7 @@ export default function Post({ post }: PostProps): JSX.Element {
     return totalReading;
   }, [post]);
 
-  console.log(estimatedReadingTime);
-
-  if (!post) {
+  if (router.isFallback) {
     return <p>Carregando...</p>;
   }
 
@@ -78,7 +79,11 @@ export default function Post({ post }: PostProps): JSX.Element {
         <section className={styles.details}>
           <div>
             <FiCalendar />
-            <span>{post.first_publication_date}</span>
+            <span>
+              {format(parseISO(post.first_publication_date), 'dd LLL yyyy', {
+                locale: ptBR,
+              })}
+            </span>
           </div>
           <div>
             <FiUser />
@@ -92,14 +97,15 @@ export default function Post({ post }: PostProps): JSX.Element {
 
         <section className={styles.content}>
           {postContentBody.map(content => (
-            <>
+            <div key={content.heading}>
               <h3>{content.heading}</h3>
               <div
+                // eslint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{
                   __html: content.body,
                 }}
               />
-            </>
+            </div>
           ))}
         </section>
       </main>
@@ -120,19 +126,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const prismic = getPrismicClient({});
   const post = await prismic.getByUID('posts', String(params.slug));
 
-  console.log(JSON.stringify(post, null, 2));
   return {
     props: {
-      post: {
-        ...post,
-        first_publication_date: format(
-          parseISO(post.first_publication_date),
-          'dd LLL yyyy',
-          {
-            locale: ptBR,
-          }
-        ),
-      },
+      post,
     },
     revalidate: 60 * 60,
   };
